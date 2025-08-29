@@ -1,11 +1,18 @@
-FROM golang:1.24.1
+# Указываем базовый образ Go
+FROM golang:1.24.1-alpine AS build
 
+# Устанавливаем рабочую директорию
 WORKDIR /app
+
+COPY go.mod ./
+RUN go mod download
 
 COPY . .
 
-RUN go mod tidy
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /main .
 
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /main main.go
+FROM alpine:latest
+WORKDIR /
+COPY --from=build /main /main
 
 CMD ["/main"]
